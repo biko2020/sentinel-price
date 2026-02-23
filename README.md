@@ -191,10 +191,6 @@ CONCURRENT_REQUESTS=16
 DOWNLOAD_DELAY=1
 ```
 
-> **Security note:** Never commit your `.env` file. It is already listed in `.gitignore`.
-
----
-
 ### Installation & Execution
 
 **1. Clone the repository:**
@@ -348,9 +344,9 @@ SentinelPrice does not include a built-in scheduler, but it integrates easily wi
 
 Deploy your spiders to a [Scrapyd](https://scrapyd.readthedocs.io/) server and trigger them via its HTTP API.
 
-**Option 3 — Apache Airflow (recommended for production):**
+**Option 3 — Apache Airflow :**
 
-For complex workflows, dependency management, and retry logic, [Apache Airflow](https://airflow.apache.org/) is the recommended approach. Each spider can be wrapped in a `BashOperator` or `DockerOperator` DAG task.
+For complex workflows, dependency management, and retry logic, [Apache Airflow](https://airflow.apache.org/) . Each spider can be wrapped in a `BashOperator` or `DockerOperator` DAG task.
 
 ---
 
@@ -413,20 +409,6 @@ SentinelPrice is designed with responsible scraping in mind:
 - [ ] Support for additional retailers (Target, eBay, BestBuy)
 - [ ] Airflow DAG templates for production scheduling
 - [ ] Grafana dashboard template for price analytics
-
----
-
-## Contributing
-
-Contributions are welcome! To get started:
-
-1. Fork the repository.
-2. Create a feature branch: `git checkout -b feature/your-feature-name`
-3. Commit your changes: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin feature/your-feature-name`
-5. Open a Pull Request.
-
-Please ensure your code follows PEP 8 style guidelines and includes relevant docstrings.
 
 ---
 
