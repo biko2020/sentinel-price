@@ -127,7 +127,7 @@ sentinel-price/
 ├── database/                # Database initialization scripts
 │   └── init.sql             # Pre-defines the schema
 ├── docker-compose.yml       # Orchestrates Scraper + DB
-├── .env                     # API Keys & DB Credentials (git-ignored)
+├── .env                     # API Keys & DB Credentials
 ├── .env.example             # Template for environment variables
 ├── .gitignore
 └── README.md
@@ -182,7 +182,7 @@ POSTGRES_PASSWORD=your_db_password
 POSTGRES_HOST=db
 POSTGRES_PORT=5432
 
-# Proxy API Configuration (e.g., BrightData, Oxylabs, SmartProxy)
+# Proxy API Configuration (e.g. Zyte API,  BrightData, ScraperAPI, Oxylabs, SmartProxy)
 PROXY_API_KEY=your_proxy_api_key
 PROXY_ENDPOINT=http://proxy.provider.com:PORT
 
