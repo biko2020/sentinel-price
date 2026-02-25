@@ -1,0 +1,39 @@
+       ┌────────────────────────────────────────────────────────┐
+       │         ORDRE D’IMPLÉMENTATION DE L'APPLICATION        │
+       │                    (SentinelPrice)                   	 │
+       └───────────────┬────────────────────────┬───────────────┘
+                       │                        │
+       ┌───────────────▼────────────────────────▼───────────────┐
+       │         PHASE 1 : FONDATIONS & CONFIGURATION       	 │
+       ├────────────────────────────────────────────────────────┤
+       │ • .gitignore      : Sécurisation du repository      	 │
+       │ • .env.example    : Template des secrets (API/DB)      │
+       │ • requirements.txt: Dépendances (Scrapy, Psycopg2)  	 │
+       │ • scrapy.cfg      : Point d'entrée du moteur        	 │
+       │ • init.sql        : Schéma PostgreSQL (Clean DB)  	 │
+       └───────────────┬────────────────────────┬───────────────┘
+                       │                        │
+       ┌───────────────▼────────────────────────▼──────────────┐
+       │         PHASE 2 : ARCHITECTURE DES DONNÉES     ,      │
+       ├───────────────────────────────────────────────────────┤
+       │ • items.py        : Schéma des objets (Modélisation) 	│
+       │ • settings.py     : Optimisation (Concurrency/Delay) 	│ 
+       │ • middlewares.py  : Stratégies Anti-Bot (Proxies)    	│
+       │ • pipelines.py    : Nettoyage et Insertion SQL       	│
+       └───────────────┬────────────────────────┬──────────────┘
+       		  │                        │
+       ┌───────────────▼────────────────────────▼──────────────┐
+       │         PHASE 3 : MOTEURS D'EXTRACTION (SPIDERS)    	│
+       ├───────────────────────────────────────────────────────┤
+       │ • amazon_spider.py : Logique d'extraction sélective 	│
+       │ • walmart_spider.py: Parsing des données dynamiques 	│
+       │ • Target Logic     : Gestion des sélecteurs CSS/XPath	│
+       └───────────────┬────────────────────────┬──────────────┘
+       		  │                        │
+       ┌───────────────▼────────────────────────▼──────────────┐
+       │         PHASE 4 : ORCHESTRATION & LIVRAISON         	│
+       ├───────────────────────────────────────────────────────┤
+       │ • docker-compose.yml : Virtualisation Scraper + DB    │
+       │ • volumes/ networks  : Persistance et isolation     	│
+       │ • README.md          : Documentation & Mode d'emploi 	│
+       └───────────────────────────────────────────────────────┘

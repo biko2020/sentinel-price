@@ -126,6 +126,7 @@ sentinel-price/
 │   └── requirements.txt
 ├── database/                # Database initialization scripts
 │   └── init.sql             # Pre-defines the schema
+├── docs/      
 ├── docker-compose.yml       # Orchestrates Scraper + DB
 ├── .env                     # API Keys & DB Credentials
 ├── .env.example             # Template for environment variables
