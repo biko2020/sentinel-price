@@ -38,8 +38,9 @@ logger = logging.getLogger(__name__)
 # -----------------------------------------------------------------------------
 
 START_ASINS = [
-    # "B0XXXXXXXX",   # Product name / description for reference
-    # "B0YYYYYYYY",
+    "B08N5WRWNW",  # Apple MacBook Air M1
+    "B09G96TFFG",  # Apple iPad Mini
+    "B07ZPKN6PB",  # Apple iPhone 11
 ]
 
 AMAZON_BASE_URL  = "https://www.amazon.com"
