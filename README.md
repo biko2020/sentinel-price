@@ -127,7 +127,8 @@ sentinel-price/
 │   └── requirements.txt
 ├── database/                # Database initialization scripts
 │   └── init.sql             # Pre-defines the schema
-├── docs/      
+├── docs/     
+├── Makefile                 # Automation entry point      
 ├── docker-compose.yml       # Orchestrates Scraper + DB
 ├── .env                     # API Keys & DB Credentials
 ├── .env.example             # Template for environment variables
@@ -270,6 +271,56 @@ docker-compose down -v
 ```
 
 > The `-v` flag removes Docker volumes, including the PostgreSQL data directory. Use this when you want a clean slate.
+
+---
+
+## 🖥️ Windows Automation — `sentinel.bat`
+
+A one-click entry point for Windows users that automates the full pipeline
+without needing to run Docker commands manually.
+
+### Setup
+
+Place `sentinel.bat` at the root of the project (same level as `docker-compose.yml`).
+Make sure Docker Desktop is running before executing any command.
+
+### Usage
+
+Double-click `sentinel.bat` in File Explorer, or run it from the terminal:
+```cmd
+.\sentinel.bat
+```
+
+### Commands
+
+| Command                  | Action                                              |
+|--------------------------|-----------------------------------------------------|
+| `.\sentinel.bat`         | Full run — starts stack, crawls all, shows results  |
+| `.\sentinel.bat amazon`  | Crawl Amazon only, then show results                |
+| `.\sentinel.bat walmart` | Crawl Walmart only, then show results               |
+| `.\sentinel.bat query`   | Show latest prices without running a crawl          |
+| `.\sentinel.bat reset`   | Wipe all data (asks for confirmation before running)|
+
+### Example — full run output
+```cmd
+============================================================
+  SentinelPrice · Automation Entry Point
+============================================================
+
+[1/4] Starting Docker stack...
+[2/4] Waiting for database to be ready...
+[3/4] Running crawls...
+  → Amazon spider
+  → Walmart spider
+[4/4] Querying latest prices...
+
+ product_name            | price_current | currency | availability | scraped_at
+-------------------------+---------------+----------+--------------+------------
+ Apple MacBook Air M3    |       1099.00 | USD      | in_stock     | 2026-02-26
+```
+
+> **Note:** On first run `sentinel.bat` will also trigger a Docker image build,
+> which may take a few minutes. Subsequent runs are significantly faster.
 
 ---
 
