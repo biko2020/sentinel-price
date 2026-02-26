@@ -241,9 +241,9 @@ Then run a sample query:
 
 ```sql
 -- View the latest 10 price records
-SELECT name, brand, price_current, currency, availability, timestamp
-FROM pricing_history
-ORDER BY timestamp DESC
+SELECT product_name, brand, price_current, currency, availability, scraped_at
+FROM latest_prices
+ORDER BY scraped_at DESC
 LIMIT 10;
 
 -- Count total products tracked
