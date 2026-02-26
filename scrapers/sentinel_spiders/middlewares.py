@@ -147,7 +147,8 @@ class ProxyMiddleware:
 
         request.meta["proxy"] = self.endpoint
 
-        if self.username and self.password:
+        if self.username:
+            # Zyte and some providers use API key as username with empty password
             credentials = f"{self.username}:{self.password}"
             encoded     = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
             request.headers["Proxy-Authorization"] = f"Basic {encoded}"

@@ -10,7 +10,7 @@
 #  Usage:
 #    scrapy crawl amazon_spider
 #    scrapy crawl amazon_spider -a url="https://www.amazon.com/dp/B0XXXXXXXX"
-#    scrapy crawl amazon_spider -a asin="B0XXXXXXXX" 
+#    scrapy crawl amazon_spider -a asin="B0XXXXXXXX"
 #
 #  Configuration:
 #    Add target ASINs or URLs to START_ASINS / start_urls below.
@@ -34,14 +34,15 @@ logger = logging.getLogger(__name__)
 
 
 # -----------------------------------------------------------------------------
-#  Target ASINs — add your products here 
+#  Target ASINs — add your products here
 # -----------------------------------------------------------------------------
 
 START_ASINS = [
-    "B08N5WRWNW",  # Apple MacBook Air M1
-    "B09G96TFFG",  # Apple iPad Mini
-    "B07ZPKN6PB",  # Apple iPhone 11
+    "B0CX23V2ZK",  # Apple AirPods Pro 2nd Gen
+    "B09BR6WFZR",  # Kindle Paperwhite
+    "B07FZ8S74R",  # Echo Dot 4th Gen
 ]
+
 
 AMAZON_BASE_URL  = "https://www.amazon.com"
 PRODUCT_URL_TPL  = "https://www.amazon.com/dp/{asin}"
@@ -151,7 +152,7 @@ class AmazonSpider(scrapy.Spider):
     # -------------------------------------------------------------------------
 
     def _parse_product_item(self, response, asin: str):
-        loader = ItemLoader(item=ProductItem(), response=response)
+        loader = ItemLoader(item=ProductItem(), selector=response)
 
         loader.add_value("source", "amazon")
         loader.add_value("sku",    asin)
@@ -200,7 +201,7 @@ class AmazonSpider(scrapy.Spider):
     # -------------------------------------------------------------------------
 
     def _parse_price_snapshot(self, response, asin: str):
-        loader = ItemLoader(item=PriceSnapshotItem(), response=response)
+        loader = ItemLoader(item=PriceSnapshotItem(), selector=response)
 
         loader.add_value("source", "amazon")
         loader.add_value("sku",    asin)

@@ -194,7 +194,7 @@ class WalmartSpider(scrapy.Spider):
     # -------------------------------------------------------------------------
 
     def _parse_product_item(self, response, item_id: str, nd: dict):
-        loader = ItemLoader(item=ProductItem(), response=response)
+        loader = ItemLoader(item=ProductItem(), selector=response)
 
         loader.add_value("source", "walmart")
         loader.add_value("sku",    item_id)
@@ -253,7 +253,7 @@ class WalmartSpider(scrapy.Spider):
     # -------------------------------------------------------------------------
 
     def _parse_price_snapshot(self, response, item_id: str, nd: dict):
-        loader = ItemLoader(item=PriceSnapshotItem(), response=response)
+        loader = ItemLoader(item=PriceSnapshotItem(), selector=response)
 
         loader.add_value("source", "walmart")
         loader.add_value("sku",    item_id)
