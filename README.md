@@ -123,6 +123,7 @@ sentinel-price/
 │   │   ├── settings.py      # Concurrency & Proxy settings
 │   │   └── middlewares.py   # Anti-bot bypass logic
 │   ├── scrapy.cfg
+│   ├── Dockerfile
 │   └── requirements.txt
 ├── database/                # Database initialization scripts
 │   └── init.sql             # Pre-defines the schema
