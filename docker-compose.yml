@@ -1,0 +1,111 @@
+# =============================================================================
+#  SentinelPrice · Docker Compose
+# =============================================================================
+#  Orchestrates two services:
+#    · db      — PostgreSQL 15 database (persistent volume)
+#    · scraper — Scrapy extraction engine (connects to db)
+#
+#  Usage:
+#    Start the stack:         docker-compose up --build
+#    Run a crawl:             docker-compose run scraper scrapy crawl amazon_spider
+#    Stop (keep data):        docker-compose down
+#    Stop (wipe all data):    docker-compose down -v
+#
+#  Requirements:
+#    Copy .env.example to .env and fill in your credentials before running.
+# =============================================================================
+
+version: "3.9"
+
+services:
+
+  # ---------------------------------------------------------------------------
+  #  db · PostgreSQL 15
+  # ---------------------------------------------------------------------------
+
+  db:
+    image: postgres:15-alpine
+    container_name: sentinelprice_db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB}
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "5432:5432"       # Expose to host for pgAdmin / DBeaver access
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data          # Persistent data volume
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro  # Auto-run on first start
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval:   10s
+      timeout:    5s
+      retries:    5
+      start_period: 10s
+
+    networks:
+      - sentinel_net
+
+  # ---------------------------------------------------------------------------
+  #  scraper · Scrapy extraction engine
+  # ---------------------------------------------------------------------------
+
+  scraper:
+    build:
+      context:    ./scrapers
+      dockerfile: Dockerfile
+    container_name: sentinelprice_scraper
+    restart: "no"           # Scrapy runs as a job, not a long-running service
+
+    env_file:
+      - .env                # Loads all .env variables into the container
+
+    environment:
+      # Explicitly pass DB host so psycopg2 connects to the db service
+      POSTGRES_HOST: db
+
+    volumes:
+      - ./scrapers:/app     # Mount source for live code changes without rebuild
+      - scraper_logs:/app/logs
+
+    depends_on:
+      db:
+        condition: service_healthy   # Wait for PostgreSQL to be ready before starting
+
+    networks:
+      - sentinel_net
+
+    # Default command — override at runtime:
+    #   docker-compose run scraper scrapy crawl amazon_spider
+    command: ["scrapy", "list"]     # Lists available spiders on plain `docker-compose up`
+
+
+# =============================================================================
+#  Volumes
+# =============================================================================
+
+volumes:
+  postgres_data:
+    driver: local
+    labels:
+      com.sentinelprice.description: "PostgreSQL persistent data"
+
+  scraper_logs:
+    driver: local
+    labels:
+      com.sentinelprice.description: "Scrapy crawl logs"
+
+
+# =============================================================================
+#  Networks
+# =============================================================================
+
+networks:
+  sentinel_net:
+    driver: bridge
+    labels:
+      com.sentinelprice.description: "Internal network for db ↔ scraper communication"
