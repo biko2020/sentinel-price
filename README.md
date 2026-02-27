@@ -453,13 +453,15 @@ SentinelPrice is designed with responsible scraping in mind:
 - JavaScript-rendered content requires Scrapy-Playwright integration (not yet included).
 - No built-in web dashboard — database querying requires a separate tool or integration.
 - No native alerting system for price drops or availability changes.
+- Scrapy-Playwright middleware for JS-heavy pages
 
 **Planned Features:**
 
-- [ ] Scrapy-Playwright middleware for JS-heavy pages
-- [ ] Built-in REST API layer for dashboard integration
-- [ ] Email/Slack alerting for price change events
+
+
 - [ ] Support for additional retailers (Target, eBay, BestBuy)
+- [ ] Email/Slack alerting for price change events
+- [ ] Built-in REST API layer for dashboard integration
 - [ ] Airflow DAG templates for production scheduling
 - [ ] Grafana dashboard template for price analytics
 

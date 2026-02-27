@@ -111,11 +111,11 @@ class WalmartSpider(scrapy.Spider):
             yield scrapy.Request(
                 url,
                 callback = self.parse_product,
-                errback  = self.handle_error,
                 meta     = {
-                    "handle_httpstatus_list": [404, 410, 503],
-                },
-                headers  = self._browser_headers(),
+                    "use_playwright":       True,
+                    "playwright_wait_for":  "#productTitle",   # wait for this selector
+                    "playwright_timeout":   30_000,
+                }
             )
 
     # -------------------------------------------------------------------------

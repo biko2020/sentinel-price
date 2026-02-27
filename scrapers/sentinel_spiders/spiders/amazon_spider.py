@@ -101,13 +101,12 @@ class AmazonSpider(scrapy.Spider):
         for url in self.start_urls:
             yield scrapy.Request(
                 url,
-                callback    = self.parse_product,
-                errback     = self.handle_error,
-                meta        = {
-                    "dont_redirect":    False,
-                    "handle_httpstatus_list": [404, 503],
-                },
-                headers     = self._browser_headers(),
+                callback = self.parse_product,
+                meta     = {
+                    "use_playwright":       True,
+                    "playwright_wait_for":  "#productTitle",   # wait for this selector
+                    "playwright_timeout":   30_000,
+                }
             )
 
     # -------------------------------------------------------------------------

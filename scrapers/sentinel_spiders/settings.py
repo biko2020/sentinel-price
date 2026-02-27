@@ -100,6 +100,7 @@ DOWNLOADER_MIDDLEWARES = {
     "sentinel_spiders.middlewares.RandomUserAgentMiddleware":        400,
     "sentinel_spiders.middlewares.ProxyMiddleware":                  410,
     "sentinel_spiders.middlewares.RateLimitRetryMiddleware":         420,
+    "sentinel_spiders.middlewares.PlaywrightMiddleware":             430,
     "sentinel_spiders.middlewares.SentinelRetryMiddleware":          550,
 }
 
@@ -139,7 +140,15 @@ PROXY_API_KEY   = os.environ.get("PROXY_API_KEY",  "")
 #  Requires scrapy-playwright and browser binaries:
 #    playwright install chromium
 
-PLAYWRIGHT_BROWSER_TYPE                 = "chromium"
+PLAYWRIGHT_ENABLED               = os.environ.get("PLAYWRIGHT_ENABLED",              "true").lower()  == "true"
+PLAYWRIGHT_BROWSER_TYPE          = os.environ.get("PLAYWRIGHT_BROWSER_TYPE",          "chromium")
+PLAYWRIGHT_AUTO_UPGRADE_ON_BLOCK = os.environ.get("PLAYWRIGHT_AUTO_UPGRADE_ON_BLOCK", "true").lower() == "true"
+
+# These remain hardcoded — no value in making them env-driven
+PLAYWRIGHT_DEFAULT_WAIT_FOR             = None      # Override per-request via meta["playwright_wait_for"]
+PLAYWRIGHT_DEFAULT_TIMEOUT              = 30_000    # ms
+PLAYWRIGHT_MAX_PAGES_PER_CONTEXT        = 4
+PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT   = 30_000    # ms
 PLAYWRIGHT_LAUNCH_OPTIONS               = {
     "headless": True,
     "args": [
@@ -149,8 +158,6 @@ PLAYWRIGHT_LAUNCH_OPTIONS               = {
         "--disable-gpu",
     ],
 }
-PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT   = 30_000   # ms
-PLAYWRIGHT_MAX_PAGES_PER_CONTEXT        = 4
 
 
 # -----------------------------------------------------------------------------
