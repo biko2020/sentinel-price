@@ -1,4 +1,3 @@
-
 # =============================================================================
 #  SentinelPrice · REST API
 # =============================================================================
@@ -24,8 +23,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.database import database
-from api.routers import products, prices, stats
+from database import database
+from routers import products, prices, stats
 
 
 # -----------------------------------------------------------------------------

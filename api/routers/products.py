@@ -1,4 +1,3 @@
-
 # =============================================================================
 #  SentinelPrice · Products Router
 # =============================================================================
@@ -6,8 +5,8 @@
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 
-from api.database import database
-from api.models import ProductResponse
+from database import database
+from models import ProductResponse
 
 router = APIRouter()
 

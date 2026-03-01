@@ -1,11 +1,10 @@
-
 # =============================================================================
 #  SentinelPrice · Stats Router
 # =============================================================================
 
 from fastapi import APIRouter
-from api.database import database
-from api.models import StatsResponse
+from database import database
+from models import StatsResponse
 
 router = APIRouter()
 
