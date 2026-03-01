@@ -7,6 +7,7 @@
 #    400 · RandomUserAgentMiddleware   — Rotates browser fingerprints
 #    410 · ProxyMiddleware             — Injects rotating proxies
 #    420 · RateLimitRetryMiddleware    — Handles 429 / Retry-After headers
+#    430 · PlaywrightMiddleware        — JS rendering for bot-blocked pages
 #    543 · SentinelSpiderMiddleware    — Spider-level logging & error handling
 #    550 · SentinelRetryMiddleware     — Extended retry with exponential backoff
 #
@@ -145,6 +146,12 @@ class ProxyMiddleware:
         if not self.enabled:
             return
 
+        # Skip proxy injection for Playwright requests — Playwright manages
+        # its own proxy via PLAYWRIGHT_CONTEXTS in settings.py.
+        # Injecting meta["proxy"] into a Playwright request causes Error.
+        if request.meta.get("playwright"):
+            return
+
         request.meta["proxy"] = self.endpoint
 
         if self.username:
@@ -255,8 +262,186 @@ class RateLimitRetryMiddleware:
         return min(backoff + jitter, self.MAX_WAIT_SECONDS)
 
 
+
 # =============================================================================
-#  4. SentinelRetryMiddleware
+#  4. PlaywrightMiddleware
+# =============================================================================
+
+class PlaywrightMiddleware:
+    """
+    Upgrades eligible requests to full browser rendering via Playwright.
+
+    How it works:
+      - Runs on every response AFTER the standard HTTP download.
+      - If the response is a bot-block / CAPTCHA (detected via signals), or if
+        the spider explicitly requests Playwright via meta["use_playwright"],
+        the request is re-issued through scrapy-playwright's Chromium engine.
+      - Playwright waits for a configurable CSS selector before returning,
+        ensuring JS-rendered content (prices, availability) is fully loaded.
+      - Falls back silently to the original response if Playwright fails.
+
+    Opt-in per request (spider side):
+        yield scrapy.Request(
+            url,
+            meta={
+                "use_playwright":       True,
+                "playwright_wait_for":  "#productTitle",   # optional
+                "playwright_timeout":   20000,             # optional (ms)
+            }
+        )
+
+    Auto-upgrade on bot-block (no spider changes needed):
+        Any response containing CAPTCHA signals is automatically retried
+        via Playwright on the first block — transparent to the spider.
+
+    Settings (settings.py):
+        PLAYWRIGHT_ENABLED               = True
+        PLAYWRIGHT_DEFAULT_WAIT_FOR      = None     # Global CSS selector to wait for
+        PLAYWRIGHT_DEFAULT_TIMEOUT       = 30000    # ms
+        PLAYWRIGHT_AUTO_UPGRADE_ON_BLOCK = True     # Auto-retry blocked responses
+    """
+
+    BLOCK_SIGNALS = [
+        "captcha",
+        "robot check",
+        "enter the characters you see below",
+        "verify you are human",
+        "access denied",
+        "automated access",
+        "security check",
+        "please verify",
+    ]
+
+    def __init__(self, settings):
+        self.enabled         = settings.getbool("PLAYWRIGHT_ENABLED", True)
+        self.auto_upgrade    = settings.getbool("PLAYWRIGHT_AUTO_UPGRADE_ON_BLOCK", True)
+        self.default_wait    = settings.get("PLAYWRIGHT_DEFAULT_WAIT_FOR", None)
+        self.default_timeout = settings.getint("PLAYWRIGHT_DEFAULT_TIMEOUT", 30_000)
+
+        if not self.enabled:
+            raise NotConfigured("PlaywrightMiddleware is disabled (PLAYWRIGHT_ENABLED=False).")
+
+        try:
+            from scrapy_playwright.page import PageMethod  # noqa: F401
+        except ImportError:
+            raise NotConfigured(
+                "scrapy-playwright is not installed. "
+                "Run: pip install scrapy-playwright && playwright install chromium"
+            )
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(crawler.settings)
+
+    def process_request(self, request, spider):
+        """
+        If the request has use_playwright=True, enrich it with
+        Playwright page methods (wait_for_selector, scroll, etc.).
+        """
+        if not request.meta.get("use_playwright"):
+            return
+
+        from scrapy_playwright.page import PageMethod
+
+        wait_selector = (
+            request.meta.get("playwright_wait_for")
+            or self.default_wait
+        )
+        timeout = request.meta.get("playwright_timeout", self.default_timeout)
+
+        page_methods = [
+            PageMethod("set_viewport_size", {"width": 1366, "height": 768}),
+        ]
+
+        if wait_selector:
+            page_methods.append(
+                PageMethod(
+                    "wait_for_selector",
+                    wait_selector,
+                    timeout=timeout,
+                    state="visible",
+                )
+            )
+        else:
+            page_methods.append(
+                PageMethod("wait_for_load_state", "networkidle", timeout=timeout)
+            )
+
+        # Scroll to trigger lazy-loaded price/availability elements
+        page_methods.append(
+            PageMethod("evaluate", "window.scrollBy(0, window.innerHeight * 0.6)")
+        )
+
+        request.meta["playwright"]               = True
+        request.meta["playwright_page_methods"]  = page_methods
+        request.meta["playwright_include_page"]  = False
+
+        logger.debug("Playwright: upgrading to browser render: %s", request.url)
+
+    def process_response(self, request, response, spider):
+        """
+        After a standard HTTP response, check for bot-block.
+        If detected and auto-upgrade is on, re-issue via Playwright.
+        """
+        if request.meta.get("playwright"):
+            return response
+
+        if self.auto_upgrade and self._is_blocked(response):
+            logger.warning(
+                "Bot block on %s — auto-upgrading to Playwright render.",
+                response.url,
+            )
+            spider.crawler.stats.inc_value("sentinel/playwright_upgrades")
+
+            from scrapy_playwright.page import PageMethod
+
+            new_request = request.copy()
+            new_request.meta.update({
+                "use_playwright":           True,
+                "playwright":               True,
+                "playwright_include_page":  False,
+                "playwright_page_methods":  [
+                    PageMethod("set_viewport_size", {"width": 1366, "height": 768}),
+                    PageMethod("wait_for_load_state", "networkidle", timeout=self.default_timeout),
+                    PageMethod("evaluate", "window.scrollBy(0, window.innerHeight * 0.6)"),
+                ],
+            })
+            new_request.dont_filter = True
+            return new_request
+
+        return response
+
+    def process_exception(self, request, exception, spider):
+        """
+        On Playwright timeout or browser crash, fall back to HTTP request.
+        """
+        playwright_exceptions = (
+            "TimeoutError",
+            "TargetClosedError",
+            "BrowserContextClosedError",
+        )
+        exc_name = type(exception).__name__
+        if exc_name in playwright_exceptions:
+            logger.warning(
+                "Playwright [%s] on %s — falling back to HTTP.",
+                exc_name, request.url,
+            )
+            spider.crawler.stats.inc_value("sentinel/playwright_fallbacks")
+            fallback = request.copy()
+            fallback.meta["use_playwright"] = False
+            fallback.meta["playwright"]     = False
+            fallback.dont_filter            = True
+            return fallback
+
+    def _is_blocked(self, response) -> bool:
+        if response.status == 503:
+            return True
+        sample = response.text[:5000].lower()
+        return any(signal in sample for signal in self.BLOCK_SIGNALS)
+
+
+# =============================================================================
+#  5. SentinelRetryMiddleware
 # =============================================================================
 
 class SentinelRetryMiddleware(RetryMiddleware):
@@ -338,7 +523,7 @@ class SentinelRetryMiddleware(RetryMiddleware):
 
 
 # =============================================================================
-#  5. SentinelSpiderMiddleware
+#  6. SentinelSpiderMiddleware
 # =============================================================================
 
 class SentinelSpiderMiddleware:

@@ -457,8 +457,6 @@ SentinelPrice is designed with responsible scraping in mind:
 
 **Planned Features:**
 
-
-
 - [ ] Support for additional retailers (Target, eBay, BestBuy)
 - [ ] Email/Slack alerting for price change events
 - [ ] Built-in REST API layer for dashboard integration

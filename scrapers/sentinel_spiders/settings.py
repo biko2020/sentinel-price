@@ -139,6 +139,34 @@ PROXY_API_KEY   = os.environ.get("PROXY_API_KEY",  "")
 #  Used for product pages with JavaScript-rendered prices or lazy-loading.
 #  Requires scrapy-playwright and browser binaries:
 #    playwright install chromium
+#
+#  DOWNLOAD_HANDLERS registers Playwright as the HTTP/S handler.
+#  Without this, scrapy-playwright crashes the middleware stack on startup.
+
+DOWNLOAD_HANDLERS = {
+    "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+    "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+}
+
+
+# Playwright browser contexts — proxy is configured here, not via request.meta.
+# Playwright ignores Scrapy's meta["proxy"]; it must be set at the context level.
+_proxy_enabled  = os.environ.get("PROXY_ENABLED",  "false").lower() == "true"
+_proxy_endpoint = os.environ.get("PROXY_ENDPOINT", "")
+_proxy_username = os.environ.get("PROXY_USERNAME", "")
+_proxy_password = os.environ.get("PROXY_PASSWORD", "")
+
+PLAYWRIGHT_CONTEXTS = {
+    "default": {
+        "proxy": {
+            "server":   _proxy_endpoint,
+            "username": _proxy_username,
+            "password": _proxy_password,
+        } if _proxy_enabled and _proxy_endpoint else None,
+        "java_script_enabled": True,
+        "ignore_https_errors": True,
+    }
+}
 
 PLAYWRIGHT_ENABLED               = os.environ.get("PLAYWRIGHT_ENABLED",              "true").lower()  == "true"
 PLAYWRIGHT_BROWSER_TYPE          = os.environ.get("PLAYWRIGHT_BROWSER_TYPE",          "chromium")
