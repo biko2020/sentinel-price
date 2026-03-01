@@ -130,6 +130,16 @@ sentinel-price/
 ├── docs/     
 ├── Makefile                 # Automation entry point      
 ├── docker-compose.yml       # Orchestrates Scraper + DB
+├──api/
+│   ├── main.py              # FastAPI app, CORS, router registration, health check
+│   ├── database.py          # Async PostgreSQL connection via `databases` + `asyncpg`
+│   ├── models.py            # Pydantic response schemas for all endpoints
+│   ├── requirements.txt     # FastAPI, uvicorn, databases, asyncpg
+│   ├── Dockerfile           # Python 3.11-slim, uvicorn with --reload
+│   └── routers/
+│       ├── products.py      # GET /products, GET /products/{sku}
+│       ├── prices.py        # GET /prices/latest, /prices/history/{sku}, /prices/changes
+│       └── stats.py         # GET /stats
 ├── .env                     # API Keys & DB Credentials
 ├── .env.example             # Template for environment variables
 ├── .gitignore

@@ -82,6 +82,38 @@ services:
     command: ["scrapy", "list"]     # Lists available spiders on plain `docker-compose up`
 
 
+  # ---------------------------------------------------------------------------
+  #  api · FastAPI REST layer
+  # ---------------------------------------------------------------------------
+
+  api:
+    build:
+      context:    ./api
+      dockerfile: Dockerfile
+    container_name: sentinelprice_api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_HOST: db
+
+    ports:
+      - "8000:8000"     # API accessible at http://localhost:8000
+                        # Swagger UI at  http://localhost:8000/docs
+
+    volumes:
+      - ./api:/app      # Mount source for live reload without rebuild
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    networks:
+      - sentinel_net
+
+
 # =============================================================================
 #  Volumes
 # =============================================================================
