@@ -55,7 +55,10 @@ CREATE TABLE IF NOT EXISTS sources (
 -- Seed default sources
 INSERT INTO sources (name, base_url) VALUES
     ('amazon',  'https://www.amazon.com'),
-    ('walmart', 'https://www.walmart.com')
+    ('walmart', 'https://www.walmart.com'),
+    ('target',  'https://www.target.com'),
+    ('ebay',    'https://www.ebay.com'),
+    ('bestbuy', 'https://www.bestbuy.com')
 ON CONFLICT (name) DO NOTHING;
 
 

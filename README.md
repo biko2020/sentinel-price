@@ -117,7 +117,10 @@ sentinel-price/
 │   ├── sentinel_spiders/    # Scrapy Spiders
 │   │   ├── spiders/
 │   │   │   ├── amazon_spider.py
-│   │   │   └── walmart_spider.py
+│   │   │   ├── walmart_spider.py 
+│   │   │   ├── target_spider.py       
+│   │   │   ├── ebay_spider.py         
+│   │   │   └── bestbuy_spider.py      
 │   │   ├── items.py         # Data models
 │   │   ├── pipelines.py     # Database insertion & cleaning logic
 │   │   ├── settings.py      # Concurrency & Proxy settings
@@ -143,6 +146,7 @@ sentinel-price/
 ├── .env                     # API Keys & DB Credentials
 ├── .env.example             # Template for environment variables
 ├── .gitignore
+├── sentinel.bat
 └── README.md
 ```
 
@@ -464,12 +468,12 @@ SentinelPrice is designed with responsible scraping in mind:
 - No built-in web dashboard — database querying requires a separate tool or integration.
 - No native alerting system for price drops or availability changes.
 - Scrapy-Playwright middleware for JS-heavy pages
+- Support for additional retailers (Target, eBay, BestBuy)
+- Built-in REST API layer for dashboard integration
 
 **Planned Features:**
 
-- [ ] Support for additional retailers (Target, eBay, BestBuy)
 - [ ] Email/Slack alerting for price change events
-- [ ] Built-in REST API layer for dashboard integration
 - [ ] Airflow DAG templates for production scheduling
 - [ ] Grafana dashboard template for price analytics
 

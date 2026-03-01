@@ -4,7 +4,7 @@
 :: =============================================================================
 ::  Runs the full pipeline in one command:
 ::    1. Starts the stack (db + scraper)
-::    2. Crawls Amazon and Walmart
+::    2. Crawls all configured retailers
 ::    3. Queries and displays the latest prices
 ::
 ::  Usage:
@@ -14,6 +14,9 @@
 ::  Options:
 ::    .\sentinel.bat amazon     — crawl Amazon only
 ::    .\sentinel.bat walmart    — crawl Walmart only
+::    .\sentinel.bat target     — crawl Target only
+::    .\sentinel.bat ebay       — crawl eBay only
+::    .\sentinel.bat bestbuy    — crawl Best Buy only
 ::    .\sentinel.bat query      — query results only (no crawl)
 ::    .\sentinel.bat reset      — wipe all data and restart fresh
 :: =============================================================================
@@ -47,6 +50,9 @@ echo.
 :: Route to sub-command if argument provided
 if "%1"=="amazon"  goto :crawl_amazon
 if "%1"=="walmart" goto :crawl_walmart
+if "%1"=="target"  goto :crawl_target
+if "%1"=="ebay"    goto :crawl_ebay
+if "%1"=="bestbuy" goto :crawl_bestbuy
 if "%1"=="query"   goto :query
 if "%1"=="reset"   goto :reset
 
@@ -83,11 +89,32 @@ if %ERRORLEVEL% NEQ 0 (
     echo %RED%  WARNING: Walmart crawl exited with errors. Check logs above.%RESET%
 )
 
+echo.
+echo %CYAN%  → Target spider%RESET%
+docker-compose run --rm scraper scrapy crawl target_spider
+if %ERRORLEVEL% NEQ 0 (
+    echo %RED%  WARNING: Target crawl exited with errors. Check logs above.%RESET%
+)
+
+echo.
+echo %CYAN%  → eBay spider%RESET%
+docker-compose run --rm scraper scrapy crawl ebay_spider
+if %ERRORLEVEL% NEQ 0 (
+    echo %RED%  WARNING: eBay crawl exited with errors. Check logs above.%RESET%
+)
+
+echo.
+echo %CYAN%  → Best Buy spider%RESET%
+docker-compose run --rm scraper scrapy crawl bestbuy_spider
+if %ERRORLEVEL% NEQ 0 (
+    echo %RED%  WARNING: Best Buy crawl exited with errors. Check logs above.%RESET%
+)
+
 goto :query
 
 
 :: =============================================================================
-::  CRAWL: Amazon only
+::  CRAWL: individual spiders
 :: =============================================================================
 
 :crawl_amazon
@@ -98,17 +125,36 @@ echo %CYAN%Running Amazon spider...%RESET%
 docker-compose run --rm scraper scrapy crawl amazon_spider
 goto :query
 
-
-:: =============================================================================
-::  CRAWL: Walmart only
-:: =============================================================================
-
 :crawl_walmart
 echo %YELLOW%Starting stack...%RESET%
 docker-compose up -d db
 timeout /t 5 /nobreak >nul
 echo %CYAN%Running Walmart spider...%RESET%
 docker-compose run --rm scraper scrapy crawl walmart_spider
+goto :query
+
+:crawl_target
+echo %YELLOW%Starting stack...%RESET%
+docker-compose up -d db
+timeout /t 5 /nobreak >nul
+echo %CYAN%Running Target spider...%RESET%
+docker-compose run --rm scraper scrapy crawl target_spider
+goto :query
+
+:crawl_ebay
+echo %YELLOW%Starting stack...%RESET%
+docker-compose up -d db
+timeout /t 5 /nobreak >nul
+echo %CYAN%Running eBay spider...%RESET%
+docker-compose run --rm scraper scrapy crawl ebay_spider
+goto :query
+
+:crawl_bestbuy
+echo %YELLOW%Starting stack...%RESET%
+docker-compose up -d db
+timeout /t 5 /nobreak >nul
+echo %CYAN%Running Best Buy spider...%RESET%
+docker-compose run --rm scraper scrapy crawl bestbuy_spider
 goto :query
 
 
