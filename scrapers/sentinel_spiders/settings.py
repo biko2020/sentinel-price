@@ -119,6 +119,7 @@ ITEM_PIPELINES = {
     "sentinel_spiders.pipelines.DeduplicationPipeline":     200,    # Skip already-seen SKUs
     "sentinel_spiders.pipelines.CleaningPipeline":          300,    # Normalize & enrich fields
     "sentinel_spiders.pipelines.PostgreSQLPipeline":        400,    # Persist to database
+    "sentinel_spiders.pipelines.AlertPipeline":             500,    # Price change notifications
 }
 
 
@@ -144,10 +145,9 @@ PROXY_API_KEY   = os.environ.get("PROXY_API_KEY",  "")
 #  Without this, scrapy-playwright crashes the middleware stack on startup.
 
 DOWNLOAD_HANDLERS = {
-    "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+    "http":  "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
     "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
 }
-
 
 # Playwright browser contexts — proxy is configured here, not via request.meta.
 # Playwright ignores Scrapy's meta["proxy"]; it must be set at the context level.

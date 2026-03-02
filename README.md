@@ -120,7 +120,10 @@ sentinel-price/
 │   │   │   ├── walmart_spider.py 
 │   │   │   ├── target_spider.py       
 │   │   │   ├── ebay_spider.py         
-│   │   │   └── bestbuy_spider.py      
+│   │   │   └── bestbuy_spider.py    
+│   │   ├── alerts/                    
+│   │   │   ├── __init__.py
+│   │   │   └── alert_manager.py       
 │   │   ├── items.py         # Data models
 │   │   ├── pipelines.py     # Database insertion & cleaning logic
 │   │   ├── settings.py      # Concurrency & Proxy settings

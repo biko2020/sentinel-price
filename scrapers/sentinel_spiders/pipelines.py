@@ -8,6 +8,7 @@
 #    200 · DeduplicationPipeline   — Skip already-seen SKUs within a crawl
 #    300 · CleaningPipeline        — Normalize, enrich, and finalize fields
 #    400 · PostgreSQLPipeline      — Upsert products, insert price snapshots
+#    500 · AlertPipeline           — Detect price changes and dispatch notifications
 #
 #  Docs: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 # =============================================================================
@@ -393,3 +394,57 @@ class PostgreSQLPipeline:
                 exc_info=True,
             )
             raise DropItem(f"Database insert failed for SKU={params.get('sku')}: {e}")
+
+
+# =============================================================================
+#  5. AlertPipeline
+# =============================================================================
+
+class AlertPipeline:
+    """
+    Detects significant price changes and dispatches Email / Slack alerts.
+    Runs after PostgreSQLPipeline (stage 500) so the new snapshot is already
+    persisted before we query for the previous one.
+
+    Enabled only when at least one alert channel is configured in .env:
+        ALERT_EMAIL_ENABLED=true
+        ALERT_SLACK_ENABLED=true
+
+    Thresholds (configurable via .env):
+        ALERT_PRICE_DROP_THRESHOLD     — default 5%
+        ALERT_PRICE_INCREASE_THRESHOLD — default 10%
+    """
+
+    def __init__(self, db_settings: dict):
+        self.db_settings   = db_settings
+        self.alert_manager = None
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        db = crawler.settings.get("DATABASE")
+        if not db:
+            raise NotConfigured("DATABASE settings not found.")
+        return cls(db)
+
+    def open_spider(self, spider):
+        import os
+        email_on = os.environ.get("ALERT_EMAIL_ENABLED", "false").lower() == "true"
+        slack_on = os.environ.get("ALERT_SLACK_ENABLED", "false").lower() == "true"
+
+        if not email_on and not slack_on:
+            logger.info("AlertPipeline: no channels enabled — skipping.")
+            return
+
+        from sentinel_spiders.alerts.alert_manager import AlertManager
+        self.alert_manager = AlertManager(self.db_settings, {})
+        logger.info("AlertPipeline ready — channels: %s",
+            ", ".join([
+                *( ["email"] if email_on else []),
+                *( ["slack"] if slack_on else []),
+            ])
+        )
+
+    def process_item(self, item, spider):
+        if self.alert_manager and isinstance(item, PriceSnapshotItem):
+            self.alert_manager.check_and_alert(item)
+        return item
