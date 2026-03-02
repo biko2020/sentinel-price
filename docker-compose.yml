@@ -158,13 +158,14 @@ services:
     command: >
       bash -c "
         airflow db upgrade &&
+        sleep 5 &&
         airflow users create
-          --username admin
-          --password admin
+          --username ${AIRFLOW_ADMIN_USER:-admin}
+          --password ${AIRFLOW_ADMIN_PASSWORD:-admin}
           --firstname SentinelPrice
           --lastname Admin
           --role Admin
-          --email admin@sentinelprice.local || true &&
+          --email admin@sentinelprice.local 2>/dev/null || true &&
         airflow webserver &
         airflow scheduler
       "
