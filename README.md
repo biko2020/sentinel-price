@@ -113,8 +113,8 @@ SentinelPrice is an enterprise-grade data extraction pipeline designed for high-
 
 ```
 sentinel-price/
-├── scrapers/                # Scrapy Project Folder
-│   ├── sentinel_spiders/    # Scrapy Spiders
+├── scrapers/                          # Scrapy Project Folder
+│   ├── sentinel_spiders/              # Scrapy Spiders
 │   │   ├── spiders/
 │   │   │   ├── amazon_spider.py
 │   │   │   ├── walmart_spider.py 
@@ -124,30 +124,34 @@ sentinel-price/
 │   │   ├── alerts/                    
 │   │   │   ├── __init__.py
 │   │   │   └── alert_manager.py       
-│   │   ├── items.py         # Data models
-│   │   ├── pipelines.py     # Database insertion & cleaning logic
-│   │   ├── settings.py      # Concurrency & Proxy settings
-│   │   └── middlewares.py   # Anti-bot bypass logic
+│   │   ├── items.py                  # Data models
+│   │   ├── pipelines.py              # Database insertion & cleaning logic
+│   │   ├── settings.py               # Concurrency & Proxy settings
+│   │   └── middlewares.py            # Anti-bot bypass logic
 │   ├── scrapy.cfg
 │   ├── Dockerfile
 │   └── requirements.txt
-├── database/                # Database initialization scripts
-│   └── init.sql             # Pre-defines the schema
+├── database/                         # Database initialization scripts
+│   └── init.sql                      # Pre-defines the schema
 ├── docs/     
-├── Makefile                 # Automation entry point      
-├── docker-compose.yml       # Orchestrates Scraper + DB
+├── airflow/
+│   └── dags/
+│       ├── daily_crawl.py            # every day 08:00 UTC
+│       ├── high_frequency_crawl.py   # every 4 hours
+│       └── weekly_maintenance.py     # every Sunday 02:00 UTC 
+├── docker-compose.yml                # Orchestrates Scraper + DB
 ├──api/
-│   ├── main.py              # FastAPI app, CORS, router registration, health check
-│   ├── database.py          # Async PostgreSQL connection via `databases` + `asyncpg`
-│   ├── models.py            # Pydantic response schemas for all endpoints
-│   ├── requirements.txt     # FastAPI, uvicorn, databases, asyncpg
-│   ├── Dockerfile           # Python 3.11-slim, uvicorn with --reload
+│   ├── main.py                       # FastAPI app, CORS, router registration, health check
+│   ├── database.py                   # Async PostgreSQL connection via `databases` + `asyncpg`
+│   ├── models.py                     # Pydantic response schemas for all endpoints
+│   ├── requirements.txt              # FastAPI, uvicorn, databases, asyncpg
+│   ├── Dockerfile                    # Python 3.11-slim, uvicorn with --reload
 │   └── routers/
-│       ├── products.py      # GET /products, GET /products/{sku}
-│       ├── prices.py        # GET /prices/latest, /prices/history/{sku}, /prices/changes
-│       └── stats.py         # GET /stats
-├── .env                     # API Keys & DB Credentials
-├── .env.example             # Template for environment variables
+│       ├── products.py               # GET /products, GET /products/{sku}
+│       ├── prices.py                 # GET /prices/latest, /prices/history/{sku}, /prices/changes
+│       └── stats.py                  # GET /stats
+├── .env                              # API Keys & DB Credentials
+├── .env.example                      # Template for environment variables
 ├── .gitignore
 ├── sentinel.bat
 └── README.md
@@ -470,14 +474,13 @@ SentinelPrice is designed with responsible scraping in mind:
 - JavaScript-rendered content requires Scrapy-Playwright integration (not yet included).
 - No built-in web dashboard — database querying requires a separate tool or integration.
 - No native alerting system for price drops or availability changes.
-- Scrapy-Playwright middleware for JS-heavy pages
-- Support for additional retailers (Target, eBay, BestBuy)
-- Built-in REST API layer for dashboard integration
+- Scrapy-Playwright middleware for JS-heavy pages.
+- Support for additional retailers (Target, eBay, BestBuy).
+- Built-in REST API layer for dashboard integration.
+- Email/Slack alerting for price change events.
+- Airflow DAG templates for production scheduling.
 
 **Planned Features:**
-
-- [ ] Email/Slack alerting for price change events
-- [ ] Airflow DAG templates for production scheduling
 - [ ] Grafana dashboard template for price analytics
 
 ---
