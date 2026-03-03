@@ -135,6 +135,7 @@ sentinel-price/
 │   └── init.sql                      # Pre-defines the schema
 ├── docs/     
 ├── airflow/
+│   ├── Dockerfile  
 │   └── dags/
 │       ├── daily_crawl.py            # every day 08:00 UTC
 │       ├── high_frequency_crawl.py   # every 4 hours

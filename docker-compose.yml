@@ -119,7 +119,9 @@ services:
   # ---------------------------------------------------------------------------
 
   airflow:
-    image: apache/airflow:2.9.1-python3.11
+    build:
+      context:    ./airflow
+      dockerfile: Dockerfile
     container_name: sentinelprice_airflow
     restart: unless-stopped
 
@@ -133,6 +135,9 @@ services:
       AIRFLOW__CORE__LOAD_EXAMPLES:               "false"
       AIRFLOW__WEBSERVER__SECRET_KEY:             ${AIRFLOW_SECRET_KEY}
       AIRFLOW__WEBSERVER__EXPOSE_CONFIG:          "true"
+      AIRFLOW__WEBSERVER__BASE_URL:               "http://localhost:8080"
+      AIRFLOW__LOGGING__BASE_LOG_FOLDER:          /opt/airflow/logs
+      AIRFLOW__LOGGING__LOGGING_LEVEL:            INFO
       AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL:  30
       # Pass project env vars through to DAG BashOperators
       POSTGRES_HOST:    db
@@ -147,6 +152,7 @@ services:
       - ./airflow/dags:/opt/airflow/dags          # DAG files
       - airflow_logs:/opt/airflow/logs
       - /var/run/docker.sock:/var/run/docker.sock  # Allows DAGs to run docker-compose
+      - .:/opt/sentinelprice                        # Project root — required by DAG BashOperators
 
     depends_on:
       db:
