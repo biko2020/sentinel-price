@@ -409,7 +409,7 @@ Three DAG templates are included for production scheduling.
 
 ### Airflow Dashboard
 
-![Airflow DAG Overview](airflow/Dashboard/sentinelprice_airflow_dag_overview.png)
+![Airflow DAG Overview](airflow/dashboard/sentinelprice_airflow_dag_overview.png)
 
 ### Daily Crawl Pipeline
 
