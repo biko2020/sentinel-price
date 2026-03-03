@@ -413,7 +413,7 @@ Three DAG templates are included for production scheduling.
 
 ### Daily Crawl Pipeline
 
-![Daily Crawl DAG](airflow/Dashboard/sentinelprice_daily_crawl_pipeline.png)
+![Daily Crawl DAG](airflow/dashboard/sentinelprice_daily_crawl_pipeline.png)
 
 Runs every day at **08:00 UTC**. All five retailer spiders execute in parallel inside a TaskGroup.
 
@@ -423,13 +423,13 @@ start → db_health_check → [amazon | walmart | target | ebay | bestbuy] → v
 
 ### High-Frequency Crawl Pipeline
 
-![High Frequency DAG](airflow/Dashboard/sentinelprice_high_frequency_pipeline.png)
+![High Frequency DAG](airflow/dashboard/sentinelprice_high_frequency_pipeline.png)
 
 Runs every **4 hours** — Amazon and eBay only (most volatile pricing).
 
 ### Weekly Maintenance Pipeline
 
-![Weekly Maintenance DAG](airflow/Dashboard/sentinelprice_weekly_maintenance_pipeline.png)
+![Weekly Maintenance DAG](airflow/dashboard/sentinelprice_weekly_maintenance_pipeline.png)
 
 Runs every **Sunday at 02:00 UTC**. Archives snapshots older than 90 days, runs `VACUUM ANALYZE`, and emits a per-retailer coverage report.
 
