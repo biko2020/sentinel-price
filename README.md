@@ -135,6 +135,14 @@ sentinel-price/
 │       ├── daily_crawl.py             # All 5 spiders in parallel — 08:00 UTC daily
 │       ├── high_frequency_crawl.py    # Amazon + eBay — every 4 hours
 │       └── weekly_maintenance.py      # Archive, vacuum, coverage report — Sundays
+├── grafana/
+│   ├── provisioning/    
+│   │   ├── datasources/   
+│   │   │   └── postgres.yml           # auto-connects to PostgreSQL on startup    
+│   │   └── dashboards/
+│   │       └── dashboards.yml         # tells Grafana where to load dashboards from          
+│   └── dashboards/
+│       └── sentinelprice.json         # full dashboard template  
 ├── api/
 │   ├── main.py                        # FastAPI app, CORS, lifespan, health check
 │   ├── database.py                    # Async PostgreSQL via databases + asyncpg

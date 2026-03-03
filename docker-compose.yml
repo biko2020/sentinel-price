@@ -115,6 +115,40 @@ services:
 
 
   # ---------------------------------------------------------------------------
+  #  grafana · Price intelligence dashboard
+  # ---------------------------------------------------------------------------
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: sentinelprice_grafana
+    restart: unless-stopped
+
+    environment:
+      GF_SECURITY_ADMIN_USER:     ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_SERVER_ROOT_URL:         http://localhost:3000
+      GF_INSTALL_PLUGINS:         grafana-clock-panel
+      POSTGRES_USER:              ${POSTGRES_USER}
+      POSTGRES_PASSWORD:          ${POSTGRES_PASSWORD}
+      POSTGRES_DB:                ${POSTGRES_DB}
+
+    ports:
+      - "3000:3000"     # Grafana UI at http://localhost:3000
+
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    networks:
+      - sentinel_net
+
+
+  # ---------------------------------------------------------------------------
   #  airflow · Workflow scheduler
   # ---------------------------------------------------------------------------
 
@@ -196,6 +230,11 @@ volumes:
     driver: local
     labels:
       com.sentinelprice.description: "Airflow task and scheduler logs"
+
+  grafana_data:
+    driver: local
+    labels:
+      com.sentinelprice.description: "Grafana dashboard state and user data"
 
 
 # =============================================================================
