@@ -1,6 +1,6 @@
 # SentinelPrice: High-Throughput E-Commerce Price Intelligence
 
-> Enterprise-grade competitor price monitoring pipeline — powered by Scrapy, PostgreSQL, FastAPI, Apache Airflow, and Docker.
+> Enterprise-grade competitor price monitoring pipeline — powered by Scrapy, PostgreSQL, FastAPI, Apache Airflow, Grafana, and Docker.
 
 ---
 
@@ -23,6 +23,7 @@
 - [Spider Configuration](#spider-configuration)
 - [REST API](#rest-api)
 - [Database Schema](#database-schema)
+- [Grafana Dashboard](#grafana-dashboard)
 - [Production Scheduling — Apache Airflow](#production-scheduling--apache-airflow)
 - [Email & Slack Alerting](#email--slack-alerting)
 - [Windows Automation — sentinel.bat](#-windows-automation--sentinelbat)
@@ -49,6 +50,7 @@ SentinelPrice is an enterprise-grade data extraction pipeline designed for high-
 - **REST API Layer:** FastAPI service exposing price data for dashboard and application integration.
 - **Price Change Alerting:** Configurable Email and Slack notifications on price drops and increases.
 - **Production Scheduling:** Apache Airflow DAGs for daily crawls, high-frequency monitoring, and weekly maintenance.
+- **Grafana Dashboard:** 13-panel real-time price intelligence dashboard with auto-provisioned PostgreSQL datasource.
 - **Containerized Environment:** Fully Dockerized with Docker Compose for plug-and-play deployment.
 
 ---
@@ -99,7 +101,9 @@ SentinelPrice is an enterprise-grade data extraction pipeline designed for high-
        └──────────┬──────────┘      └───────────────────────────────┘
                   │
        ┌──────────▼──────────┐
-       │  DASHBOARD / CLIENT │
+       │  GRAFANA DASHBOARD  │
+       │  13 panels · 5 rows │
+       │  http://localhost:3000
        └─────────────────────┘
 ```
 
@@ -136,13 +140,13 @@ sentinel-price/
 │       ├── high_frequency_crawl.py    # Amazon + eBay — every 4 hours
 │       └── weekly_maintenance.py      # Archive, vacuum, coverage report — Sundays
 ├── grafana/
-│   ├── provisioning/    
-│   │   ├── datasources/   
-│   │   │   └── postgres.yml           # auto-connects to PostgreSQL on startup    
+│   ├── provisioning/
+│   │   ├── datasources/
+│   │   │   └── postgres.yml           # Auto-connects to PostgreSQL on startup
 │   │   └── dashboards/
-│   │       └── dashboards.yml         # tells Grafana where to load dashboards from          
+│   │       └── dashboards.yml         # Tells Grafana where to load dashboards from
 │   └── dashboards/
-│       └── sentinelprice.json         # full dashboard template  
+│       └── sentinelprice.json         # 13-panel dashboard template
 ├── api/
 │   ├── main.py                        # FastAPI app, CORS, lifespan, health check
 │   ├── database.py                    # Async PostgreSQL via databases + asyncpg
@@ -153,10 +157,18 @@ sentinel-price/
 │       ├── products.py                # GET /products, GET /products/{sku}
 │       ├── prices.py                  # GET /prices/latest, /history/{sku}, /changes
 │       └── stats.py                   # GET /stats
-├── docker-compose.yml                 # db · scraper · api · airflow
+├── docs/
+│   └── screenshots/                   # Portfolio screenshots
+│       ├── grafana_dashboard_overview.png
+│       ├── grafana_price_history.png
+│       ├── grafana_kpi_stats.png
+│       ├── grafana_latest_prices.png
+│       └── grafana_price_movers.png
+├── docker-compose.yml                 # db · scraper · api · airflow · grafana
 ├── .env                               # Active credentials (never commit)
 ├── .env.example                       # Documented template
 ├── .gitignore
+├── seed_demo_data.sql                 # Demo data seed for Grafana dashboard
 ├── test_alerts.py                     # Manual alert channel verification script
 ├── sentinel.bat                       # Windows one-click automation
 └── README.md
@@ -175,6 +187,7 @@ sentinel-price/
 | REST API | FastAPI, Uvicorn, asyncpg |
 | Alerting | SMTP Email, Slack Incoming Webhooks |
 | Scheduling | Apache Airflow 2.9 (LocalExecutor) |
+| Dashboard | Grafana 10.4 |
 | Orchestration | Docker, Docker Compose |
 | Anti-Bot | Rotating Proxies, User-Agent Spoofing, AutoThrottle |
 
@@ -235,14 +248,17 @@ cd sentinel-price
 docker-compose up --build
 ```
 
-This starts four services: `db`, `scraper`, `api`, and `airflow`.
+This starts five services: `db`, `scraper`, `api`, `airflow`, and `grafana`.
 
 | Service | URL |
 |---|---|
+| Grafana Dashboard | http://localhost:3000 |
 | REST API | http://localhost:8000 |
 | API Docs (Swagger) | http://localhost:8000/docs |
 | Airflow UI | http://localhost:8080 |
 | PostgreSQL | localhost:5432 |
+
+> To start only the dashboard without Airflow: `docker-compose up -d db grafana`
 
 ---
 
@@ -403,11 +419,73 @@ curl "http://localhost:8000/api/v1/prices/changes?min_change=10"
 | `discount_pct` | NUMERIC(5,2) | Calculated discount % |
 | `currency` | CHAR(3) | ISO 4217 code |
 | `availability` | ENUM | `in_stock` · `out_of_stock` · `preorder` |
-| `rating` | NUMERIC(3,2) | Star rating |
+| `rating` | NUMERIC(3,1) | Star rating |
 | `review_count` | INTEGER | Number of reviews |
 | `scraped_at` | TIMESTAMPTZ | Snapshot timestamp |
 
 **Views:** `latest_prices` (most recent snapshot per product) · `price_changes` (detected changes between snapshots)
+
+---
+
+## Grafana Dashboard
+
+Real-time price intelligence dashboard auto-provisioned on container startup. No manual configuration required.
+
+```bash
+# Start dashboard only (no Airflow needed)
+docker-compose up -d db grafana
+```
+
+Open `http://localhost:3000` → login `admin` / `admin` → **Dashboards → SentinelPrice — Price Intelligence**.
+
+### Dashboard Overview
+
+![Dashboard Overview](docs/screenshots/grafana_dashboard_overview.png)
+
+### KPI Stats
+
+6 live stat panels — total products tracked, total snapshots, price changes in the last 24h, time since last crawl, biggest price drop in 7 days, and active retailer count.
+
+![KPI Stats](docs/screenshots/grafana_kpi_stats.png)
+
+### Price History by Retailer
+
+Multi-line time series showing average price per retailer over the selected time window. Highlights flash sales (Kindle −28%), steady declines (Samsung TV), and auction volatility (eBay).
+
+![Price History](docs/screenshots/grafana_price_history.png)
+
+### Latest Prices Table
+
+All 14 tracked products with color-coded availability status and gradient price coloring. Filterable by retailer.
+
+![Latest Prices](docs/screenshots/grafana_latest_prices.png)
+
+### Biggest Price Movers
+
+Side-by-side tables of the largest price drops and increases within the selected time range.
+
+![Price Movers](docs/screenshots/grafana_price_movers.png)
+
+### Dashboard Panels
+
+| Row | Panels |
+|---|---|
+| KPI Stats | Total Products · Total Snapshots · Price Changes 24h · Last Crawl · Biggest Drop 7d · Active Retailers |
+| Trends | Price History time series · Product Coverage pie chart |
+| Change Detection | Price Changes % scatter · Snapshots per Retailer bar gauge |
+| Full Table | Latest Prices — all products, color-coded |
+| Top Movers | Biggest Price Drops · Biggest Price Increases |
+
+### Seeding demo data
+
+To populate the dashboard without running a live crawl:
+
+```bash
+docker cp seed_demo_data.sql sentinelprice_db:/seed.sql
+docker-compose exec db psql -U sentinel_user -d sentinelprice -f /seed.sql
+```
+
+Then set the Grafana time range to **Last 7 days**.
 
 ---
 
@@ -522,6 +600,7 @@ A one-click entry point for Windows users automating the full pipeline.
 docker-compose logs -f scraper
 docker-compose logs -f api
 docker-compose logs -f airflow
+docker-compose logs -f grafana
 
 # Write spider logs to file
 docker-compose run scraper scrapy crawl amazon_spider --logfile=/app/logs/amazon.log --loglevel=INFO
@@ -540,6 +619,8 @@ docker-compose logs scraper | grep -i alert
 | Empty DB after crawl | No matching selectors | Check `start_urls` and spider logs |
 | Airflow `service "db" is not running` | Wrong compose context | DAGs use direct `psql://` — ensure DB container is up |
 | Alert not firing | Threshold not crossed | Set `ALERT_PRICE_DROP_THRESHOLD=0` temporarily to test |
+| Grafana `⚠ No data` | Datasource UID mismatch | UID hardcoded to `sentinelprice_postgres` — restart Grafana |
+| Grafana panels empty | Time range too narrow | Set time picker to **Last 7 days** |
 
 ---
 
@@ -557,10 +638,14 @@ docker-compose logs scraper | grep -i alert
 **Current Limitations:**
 
 - Playwright JS rendering is disabled when using Zyte (Zyte renders JS server-side).
-- No built-in web dashboard — use the REST API or connect a BI tool directly to PostgreSQL.
 
-**Planned:**
-- [ ] Grafana dashboard template for price analytics
+**Completed:**
+- [x] Scrapy-Playwright middleware for JS-heavy pages
+- [x] Support for additional retailers (Target, eBay, Best Buy)
+- [x] Built-in REST API layer for dashboard integration
+- [x] Email/Slack alerting for price change events
+- [x] Airflow DAG templates for production scheduling
+- [x] Grafana dashboard template for price analytics
 
 ---
 
